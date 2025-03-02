@@ -51,6 +51,7 @@ interface ChatContextType {
   getChatTitle: (chatMessages: Message[]) => string;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   messagesContainerRef: React.RefObject<HTMLDivElement>;
+  regenerateMessage: (messageId: string) => void;
 }
 
 // Create context
@@ -638,6 +639,122 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     addWelcomeMessage();
   };
 
+  // Function to regenerate a message
+  const regenerateMessage = async (messageId: string) => {
+    if (isProcessing) return;
+    
+    // Find the message to regenerate
+    const messageIndex = messages.findIndex(msg => msg.id === messageId);
+    if (messageIndex === -1 || messages[messageIndex].role !== 'assistant') return;
+
+    // Get the user message that triggered this response
+    const userMessageIndex = messageIndex - 1;
+    if (userMessageIndex < 0) return;
+    
+    const userMessage = messages[userMessageIndex];
+
+    // Remove the assistant message and all messages after it
+    const previousMessages = messages.slice(0, messageIndex);
+    setMessages(previousMessages);
+    
+    // Re-process the user message to generate a new response
+    setIsProcessing(true);
+    
+    try {
+      // Check if we should use vision model
+      const shouldUseVisionModel = Array.isArray(userMessage.content) && 
+        userMessage.content.some(item => item.type === 'image_url');
+
+      // Prepare API messages
+      const apiMessages = prepareApiMessages(userMessage, previousMessages, shouldUseVisionModel);
+      
+      // Select model
+      const modelToUse = shouldUseVisionModel ? "grok-2-vision-latest" : currentModel;
+
+      // Create streaming message placeholder
+      const streamingMessageId = generateId('assistant-');
+      const initialStreamingMessage: Message = {
+        id: streamingMessageId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+      };
+
+      setStreamingMessage(initialStreamingMessage);
+      streamingContentRef.current = "";
+
+      // Use streaming API
+      await xaiService.streamResponse(
+        apiMessages,
+        apiKey,
+        {
+          onChunk: (chunk) => {
+            // Update content ref
+            if (typeof streamingContentRef.current === 'string') {
+              streamingContentRef.current += chunk;
+            } else {
+              streamingContentRef.current = chunk;
+            }
+
+            // Update UI
+            setStreamingMessage((prev) => {
+              if (!prev) return initialStreamingMessage;
+              return {
+                ...prev,
+                content: streamingContentRef.current
+              };
+            });
+          },
+          onComplete: () => {
+            // Get final content
+            const finalContent = streamingContentRef.current;
+
+            // Clear streaming state
+            setStreamingMessage(null);
+            setIsProcessing(false);
+            streamingContentRef.current = "";
+
+            // Create final message
+            const finalMessage: Message = {
+              id: generateId('assistant-'),
+              role: "assistant",
+              content: finalContent,
+              timestamp: new Date()
+            };
+
+            // Add to messages
+            setMessages(prev => [...prev, finalMessage]);
+          },
+          onError: (error) => {
+            console.error("Stream error during regeneration:", error);
+            setIsProcessing(false);
+            setStreamingMessage(null);
+
+            toast({
+              title: "Error",
+              description: error.message || "Failed to regenerate response.",
+              variant: "destructive",
+            });
+          }
+        },
+        {
+          temperature,
+          max_tokens: maxTokens,
+          model: modelToUse
+        }
+      );
+    } catch (error) {
+      console.error("Error regenerating message:", error);
+      setIsProcessing(false);
+      
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to regenerate message. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Context value
   const contextValue: ChatContextType = {
     messages,
@@ -657,6 +774,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     getChatTitle,
     messagesEndRef,
     messagesContainerRef,
+    regenerateMessage,
   };
 
   return (
