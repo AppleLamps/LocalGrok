@@ -11,7 +11,8 @@ const ChatMessages = () => {
     messages, 
     streamingMessage, 
     messagesEndRef, 
-    messagesContainerRef
+    messagesContainerRef,
+    regenerateMessage
   } = useChatContext();
 
   // Combine actual messages with streaming message for display
@@ -26,7 +27,11 @@ const ChatMessages = () => {
     >
       <div className="pb-32">
         {displayMessages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
+          <ChatMessage 
+            key={message.id} 
+            message={message} 
+            onRegenerate={message.role === 'assistant' ? () => regenerateMessage(message.id) : undefined}
+          />
         ))}
         
         <div ref={messagesEndRef} className="h-20" />
