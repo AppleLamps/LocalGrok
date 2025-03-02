@@ -255,7 +255,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     const welcomeMessage: Message = {
       id: "welcome",
       role: "assistant",
-      content: "# Welcome to Grok\n\nI'm an AI assistant. How can I help you today?",
+      content: "I'm an AI assistant. How can I help you today?",
       timestamp: new Date()
     };
 
