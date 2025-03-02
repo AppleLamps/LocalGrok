@@ -72,24 +72,19 @@ const DEFAULT_OPTIONS: APIOptions = {
  * Helper to add markdown formatting instructions to messages
  */
 const addMarkdownFormattingInstructions = (messages: Message[]): Message[] => {
-  const formattingText = "Format your responses using Markdown for better readability: use headings (##, ###), **bold** for key points, *italics* for emphasis, bullet points and numbered lists where appropriate, and code blocks with syntax highlighting (```language) for code snippets.";
+  const formattingText = "Format your responses using Markdown for better readability: use **bold** for emphasis, *italics* for emphasis, bullet points for lists, and code blocks when needed. **Avoid using titles, headings, or introductory phrases like 'Chatting Away' or 'Let's get started'. Respond directly to the user's query.**";
 
-  // Create a copy of the messages to avoid mutating the original
   const updatedMessages = [...messages];
-
-  // Check if a system message exists
   const systemMessageIndex = updatedMessages.findIndex(msg => msg.role === "system");
 
   if (systemMessageIndex === -1) {
-    // Add a new system message if none exists
     updatedMessages.unshift({
       role: "system",
       content: `You are Grok, an AI assistant powered by the grok-2-latest model. You are helpful, concise, and provide accurate information. ${formattingText}`
     });
   } else {
-    // Update existing system message if it doesn't already have formatting instructions
     const existingContent = updatedMessages[systemMessageIndex].content;
-    if (typeof existingContent === 'string' && !existingContent.includes("Format your responses using Markdown")) {
+    if (typeof existingContent === 'string' && !existingContent.includes("Avoid using titles")) {
       updatedMessages[systemMessageIndex].content = `${existingContent} ${formattingText}`;
     }
   }
