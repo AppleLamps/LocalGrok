@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -53,22 +52,57 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
-				},
-				grok: {
-					'primary': '#7000FF',
-					'accent': '#A98EFF',
-					'bg-light': 'rgba(255, 255, 255, 0.1)',
-					'bg-ultralight': 'rgba(255, 255, 255, 0.05)',
+				// ChatGPT specific colors
+				chatgpt: {
+					'user-bg': '#FFFFFF',
+					'user-bg-dark': '#343541',
+					'ai-bg': '#F7F7F8',
+					'ai-bg-dark': '#444654',
+					'sidebar': '#F7F7F8',
+					'sidebar-dark': '#202123',
+					'btn-primary': '#10A37F',
+					'btn-primary-hover': '#0E906F'
 				}
+			},
+			typography: {
+				DEFAULT: {
+				  css: {
+					maxWidth: '100%',
+					color: 'var(--tw-prose-body)',
+					'[class~="lead"]': {
+					  color: 'var(--tw-prose-lead)',
+					},
+					a: {
+					  color: 'var(--tw-prose-links)',
+					  textDecoration: 'underline',
+					  fontWeight: '500',
+					},
+					strong: {
+					  color: 'var(--tw-prose-bold)',
+					  fontWeight: '600',
+					},
+					code: {
+					  color: 'var(--tw-prose-code)',
+					  fontWeight: '400',
+					  backgroundColor: 'var(--tw-prose-code-bg)',
+					  borderRadius: '0.25rem',
+					  paddingLeft: '0.25rem',
+					  paddingRight: '0.25rem',
+					  paddingTop: '0.125rem',
+					  paddingBottom: '0.125rem',
+					},
+					pre: {
+					  color: 'var(--tw-prose-pre-code)',
+					  backgroundColor: 'var(--tw-prose-pre-bg)',
+					  borderRadius: '0.375rem',
+					  padding: '0.75rem 1rem',
+					},
+					'pre code': {
+					  backgroundColor: 'transparent',
+					  padding: '0',
+					},
+				  },
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -76,11 +110,14 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			fontFamily: {
-				sans: ['var(--font-sans)', 'Inter', 'system-ui', 'sans-serif'],
+				sans: ['var(--font-sans)', 'Inter', 'Söhne', 'system-ui', 'sans-serif'],
 			},
 			boxShadow: {
-				'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-				'glow': '0 0 20px rgba(122, 0, 255, 0.5)',
+				DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+				sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+				md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+				lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+				xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -91,10 +128,6 @@ export default {
 					from: { height: 'var(--radix-accordion-content-height)' },
 					to: { height: '0' },
 				},
-				'pulse-subtle': {
-					'0%, 100%': { opacity: '1' },
-					'50%': { opacity: '0.7' },
-				},
 				'fade-in': {
 					'0%': { opacity: '0', transform: 'translateY(10px)' },
 					'100%': { opacity: '1', transform: 'translateY(0)' },
@@ -103,32 +136,24 @@ export default {
 					'0%': { opacity: '1', transform: 'translateY(0)' },
 					'100%': { opacity: '0', transform: 'translateY(10px)' },
 				},
-				'shimmer': {
-					'0%': { backgroundPosition: '-200% 0' },
-					'100%': { backgroundPosition: '200% 0' },
-				},
+				'bounce': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-4px)' },
+				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
-				'fade-in': 'fade-in 0.3s ease-out forwards',
-				'fade-out': 'fade-out 0.3s ease-out forwards',
-				'shimmer': 'shimmer 2s linear infinite',
-			},
-			backdropBlur: {
-				'xs': '2px',
-				'md': '8px',
-				'xl': '16px',
-			},
-			backgroundImage: {
-				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-				'gradient-glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
-				'gradient-dark': 'linear-gradient(to bottom right, #0f0c29, #302b63, #24243e)',
-				'shimmer': 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%)',
-			},
+				'fade-in': 'fade-in 0.2s ease-out forwards',
+				'fade-out': 'fade-out 0.2s ease-out forwards',
+				'bounce': 'bounce 1s infinite',
+				'bounce-delay-1': 'bounce 1s infinite 0.1s',
+				'bounce-delay-2': 'bounce 1s infinite 0.2s',
+			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		require("tailwindcss-animate"),
+		require('@tailwindcss/typography'),
+	],
 } satisfies Config;

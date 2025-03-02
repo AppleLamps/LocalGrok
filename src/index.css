@@ -1,39 +1,106 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 260 20% 10%;
-    --foreground: 0 0% 100%;
+    --background: 210 20% 98%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 260 15% 15%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 260 20% 15%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 270 100% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 270 50% 80%;
-    --secondary-foreground: 260 20% 10%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 260 20% 20%;
-    --muted-foreground: 0 0% 80%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 270 50% 70%;
-    --accent-foreground: 260 20% 10%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 260 20% 20%;
-    --input: 260 20% 20%;
-    --ring: 270 100% 50%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
+
+    /* Typography (prose) variables */
+    --tw-prose-body: #374151;
+    --tw-prose-headings: #111827;
+    --tw-prose-lead: #4b5563;
+    --tw-prose-links: #2563eb;
+    --tw-prose-bold: #111827;
+    --tw-prose-counters: #6b7280;
+    --tw-prose-bullets: #d1d5db;
+    --tw-prose-hr: #e5e7eb;
+    --tw-prose-quotes: #111827;
+    --tw-prose-quote-borders: #e5e7eb;
+    --tw-prose-captions: #6b7280;
+    --tw-prose-code: #111827;
+    --tw-prose-code-bg: #f3f4f6;
+    --tw-prose-pre-code: #e5e7eb;
+    --tw-prose-pre-bg: #1f2937;
+    --tw-prose-th-borders: #d1d5db;
+    --tw-prose-td-borders: #e5e7eb;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.5% 48%;
+
+    /* Dark mode typography (prose) variables */
+    --tw-prose-body: theme('colors.gray.300');
+    --tw-prose-headings: theme('colors.gray.200');
+    --tw-prose-lead: theme('colors.gray.300');
+    --tw-prose-links: theme('colors.blue.400');
+    --tw-prose-bold: theme('colors.gray.200');
+    --tw-prose-counters: theme('colors.gray.400');
+    --tw-prose-bullets: theme('colors.gray.400');
+    --tw-prose-hr: theme('colors.gray.700');
+    --tw-prose-quotes: theme('colors.gray.200');
+    --tw-prose-quote-borders: theme('colors.gray.700');
+    --tw-prose-captions: theme('colors.gray.400');
+    --tw-prose-code: theme('colors.gray.200');
+    --tw-prose-code-bg: theme('colors.gray.800');
+    --tw-prose-pre-code: theme('colors.gray.200');
+    --tw-prose-pre-bg: theme('colors.gray.800');
+    --tw-prose-th-borders: theme('colors.gray.700');
+    --tw-prose-td-borders: theme('colors.gray.700');
   }
 
   * {
@@ -46,7 +113,6 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background: theme('backgroundImage.gradient-dark');
   }
 
   /* Custom scrollbar */
@@ -60,36 +126,92 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted rounded-full hover:bg-accent/50 transition-all;
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full hover:bg-gray-400 dark:hover:bg-gray-500 transition-all;
+  }
+
+  code {
+    @apply bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm font-mono;
+  }
+
+  pre {
+    @apply p-4 rounded-lg overflow-auto;
+  }
+
+  pre code {
+    @apply bg-transparent p-0 dark:bg-transparent;
+  }
+
+  /* KaTeX Math Styling */
+  .math-content {
+    /* Inline math */
+    .katex {
+      font-size: 1.1em;
+    }
+    
+    /* Block math */
+    .math {
+      overflow-x: auto;
+      overflow-y: hidden;
+      margin: 1.2em 0;
+      padding: 0.7em 0.5em;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 0.375rem;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    /* Dark mode adjustments */
+    @media (prefers-color-scheme: dark) {
+      .math {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    /* Ensure dark mode works with manually set class too */
+    .dark & {
+      .math {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+    }
   }
 }
 
-/* Glass effect utilities */
 @layer utilities {
-  .glass {
-    @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-glass;
-  }
-  
-  .glass-card {
-    @apply glass rounded-xl;
-  }
-  
-  .glass-input {
-    @apply bg-white/5 border border-white/10 focus:border-primary/50 focus:ring-primary/25 transition-all;
-  }
-
   /* Animation utilities */
   .animate-in {
-    animation-name: fade-in;
-    animation-duration: 300ms;
-    animation-timing-function: ease-out;
-    animation-fill-mode: forwards;
+    animation: fadeIn 0.2s ease-out forwards;
   }
   
   .animate-out {
-    animation-name: fade-out;
-    animation-duration: 300ms;
-    animation-timing-function: ease-out;
-    animation-fill-mode: forwards;
+    animation: fadeOut 0.2s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(10px); }
+  }
+  
+  .animate-bounce {
+    animation: bounce 1s infinite;
+  }
+  
+  .animate-bounce.delay-75 {
+    animation-delay: 0.1s;
+  }
+  
+  .animate-bounce.delay-150 {
+    animation-delay: 0.2s;
+  }
+  
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
   }
 }
