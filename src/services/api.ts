@@ -72,20 +72,25 @@ const DEFAULT_OPTIONS: APIOptions = {
  * Helper to add markdown formatting instructions to messages
  */
 const addMarkdownFormattingInstructions = (messages: Message[]): Message[] => {
-  const formattingText = "Format your responses using Markdown for better readability: use **bold** for emphasis, *italics* for emphasis, bullet points for lists, and code blocks when needed. **Avoid using titles, headings, or introductory phrases like 'Chatting Away' or 'Let's get started'. Respond directly to the user's query.**";
+  const formattingText = "Format your responses using Markdown for better readability when appropriate: use *italics* for emphasis, bullet points and numbered lists where appropriate, and code blocks with syntax highlighting (```language) for code snippets.";
 
+  // Create a copy of the messages to avoid mutating the original
   const updatedMessages = [...messages];
+
+  // Check if a system message exists
   const systemMessageIndex = updatedMessages.findIndex(msg => msg.role === "system");
 
   if (systemMessageIndex === -1) {
+    // Add a new system message if none exists
     updatedMessages.unshift({
       role: "system",
-      content: You are Grok, an AI assistant powered by the grok-2-latest model. You are helpful, concise, and provide accurate information. ${formattingText}
+      content: `You are Grok, an AI assistant powered by the grok-2-latest model. You are helpful, concise, and provide accurate information. ${formattingText}`
     });
   } else {
+    // Update existing system message if it doesn't already have formatting instructions
     const existingContent = updatedMessages[systemMessageIndex].content;
-    if (typeof existingContent === 'string' && !existingContent.includes("Avoid using titles")) {
-      updatedMessages[systemMessageIndex].content = ${existingContent} ${formattingText};
+    if (typeof existingContent === 'string' && !existingContent.includes("Format your responses using Markdown")) {
+      updatedMessages[systemMessageIndex].content = `${existingContent} ${formattingText}`;
     }
   }
 
@@ -109,7 +114,7 @@ const prepareApiKey = (apiKey: string): string => {
 const getSafeKeyFormat = (apiKey: string): string => {
   const keyLength = apiKey.length;
   return keyLength > 6
-    ? ${apiKey.substring(0, 4)}...${apiKey.substring(keyLength - 2)}
+    ? `${apiKey.substring(0, 4)}...${apiKey.substring(keyLength - 2)}`
     : '***';
 };
 
@@ -123,9 +128,9 @@ const handleApiError = async (response: Response): Promise<never> => {
   let errorMessage;
   try {
     const errorData = JSON.parse(errorText);
-    errorMessage = errorData?.error?.message || Error: ${response.status} ${response.statusText};
+    errorMessage = errorData?.error?.message || `Error: ${response.status} ${response.statusText}`;
   } catch (e) {
-    errorMessage = Error: ${response.status} ${response.statusText};
+    errorMessage = `Error: ${response.status} ${response.statusText}`;
   }
 
   throw new Error(errorMessage);
@@ -178,7 +183,7 @@ const processStreamLine = (
     if (content) {
       onChunk(content);
     } else if (parsedData.choices?.[0]?.finish_reason) {
-      console.log(Streaming completed with reason: ${parsedData.choices[0].finish_reason});
+      console.log(`Streaming completed with reason: ${parsedData.choices[0].finish_reason}`);
     }
   } catch (error) {
     console.warn('Error parsing streaming response chunk:', error);
@@ -215,7 +220,7 @@ export const xaiService = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": Bearer ${cleanApiKey},
+          "Authorization": `Bearer ${cleanApiKey}`,
         },
         body: JSON.stringify(requestBody),
       });
@@ -230,7 +235,7 @@ export const xaiService = {
       console.error("Error calling XAI API:", error);
 
       if (error instanceof Error) {
-        throw new Error(Failed to get response from XAI API: ${error.message});
+        throw new Error(`Failed to get response from XAI API: ${error.message}`);
       }
 
       throw new Error("Failed to get response from XAI API");
@@ -280,7 +285,7 @@ export const xaiService = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": Bearer ${cleanApiKey},
+          "Authorization": `Bearer ${cleanApiKey}`,
         },
         body: JSON.stringify(requestBody),
         signal: controller.signal
