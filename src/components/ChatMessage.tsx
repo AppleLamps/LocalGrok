@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bot, User, Copy, ThumbsUp, ThumbsDown, Check, Play, RefreshCw, XCircle, Clock } from "lucide-react";
+import { Bot, User, Copy, ThumbsUp, ThumbsDown, Check, Play, RefreshCw, XCircle, Clock, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -19,6 +19,7 @@ interface ChatMessageProps {
     }[];
     timestamp: Date;
   };
+  onRegenerate?: () => void;
 }
 
 // Define a more generic code component props interface
@@ -266,10 +267,9 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   );
 };
 
-const ChatMessage = ({ message }: ChatMessageProps) => {
+const ChatMessage = ({ message, onRegenerate }: ChatMessageProps) => {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
-  const [feedback, setFeedback] = useState<'like' | 'dislike' | null>(null);
   
   // Format timestamp for display
   const formatTimestamp = (timestamp: Date) => {
@@ -446,6 +446,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
           "min-w-0",
           isUser ? "max-w-[85%]" : "flex-1"
         )}>
+          {/* Message header */}
           <div className={cn(
             "flex items-center mb-1 text-sm font-medium",
             isUser && "justify-end" // Right align user message header
@@ -479,45 +480,28 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
           {/* Render message content */}
           {renderContent()}
           
-          {/* Message actions - only for assistant messages */}
-          {!isUser && (
-            <div className="mt-3 flex items-center gap-2 text-gray-500 dark:text-gray-400">
+          {/* Message actions */}
+          <div className="mt-3 flex items-center gap-2 text-gray-500 dark:text-gray-400">
+            <button
+              onClick={copyToClipboard}
+              className="p-1 hover:text-gray-700 dark:hover:text-gray-200 rounded"
+              aria-label="Copy to clipboard"
+            >
+              <Copy size={16} />
+              {copied && <span className="ml-1 text-xs">Copied!</span>}
+            </button>
+            
+            {/* Regenerate button - only for assistant messages */}
+            {!isUser && onRegenerate && (
               <button
-                onClick={copyToClipboard}
+                onClick={onRegenerate}
                 className="p-1 hover:text-gray-700 dark:hover:text-gray-200 rounded"
-                aria-label="Copy to clipboard"
+                aria-label="Regenerate response"
               >
-                <Copy size={16} />
-                {copied && <span className="ml-1 text-xs">Copied!</span>}
+                <RotateCw size={16} />
               </button>
-              
-              <button
-                onClick={() => setFeedback(feedback === 'like' ? null : 'like')}
-                className={cn(
-                  "p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700", 
-                  feedback === 'like' 
-                    ? "text-green-500 dark:text-green-400" 
-                    : "hover:text-gray-700 dark:hover:text-gray-200"
-                )}
-                aria-label="Thumbs up"
-              >
-                <ThumbsUp size={16} />
-              </button>
-              
-              <button 
-                onClick={() => setFeedback(feedback === 'dislike' ? null : 'dislike')}
-                className={cn(
-                  "p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700", 
-                  feedback === 'dislike' 
-                    ? "text-red-500 dark:text-red-400" 
-                    : "hover:text-gray-700 dark:hover:text-gray-200"
-                )}
-                aria-label="Thumbs down"
-              >
-                <ThumbsDown size={16} />
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
