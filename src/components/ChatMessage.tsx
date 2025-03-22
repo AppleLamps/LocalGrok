@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
+<<<<<<< HEAD
 import { Bot, User, Copy, ThumbsUp, ThumbsDown, Check, Play, RefreshCw, XCircle, Clock, RotateCw, Image } from "lucide-react";
+=======
+import { Bot, User, Copy, ThumbsUp, ThumbsDown, Check, Play, RefreshCw, XCircle, Clock, RotateCw } from "lucide-react";
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
 import { cn } from "@/lib/utils";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -291,7 +295,10 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
 const ChatMessage = ({ message, onRegenerate }: ChatMessageProps) => {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
+<<<<<<< HEAD
   const customBotName = useCustomBotName();
+=======
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
   
   // Format timestamp for display
   const formatTimestamp = (timestamp: Date) => {
@@ -507,7 +514,11 @@ const ChatMessage = ({ message, onRegenerate }: ChatMessageProps) => {
           
           {/* Message actions */}
           <div className="mt-3 flex items-center gap-2 text-gray-500 dark:text-gray-400">
+<<<<<<< HEAD
             <button 
+=======
+            <button
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
               onClick={copyToClipboard}
               className="p-1 hover:text-gray-700 dark:hover:text-gray-200 rounded"
               aria-label="Copy to clipboard"

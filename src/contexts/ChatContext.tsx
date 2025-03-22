@@ -24,10 +24,13 @@ export interface Message {
   timestamp: Date;
   fileContents?: string;
   fileNames?: string[];
+<<<<<<< HEAD
   sonarResponse?: boolean;
   citations?: string[];
   isGeneratingImage?: boolean;
   imagePrompt?: string;
+=======
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
 }
 
 export interface SavedChat {
@@ -80,12 +83,16 @@ const STORAGE_KEYS = {
 };
 
 // Helper functions
+<<<<<<< HEAD
 const generateId = (prefix: string = ''): string => {
   // Add a random component to ensure uniqueness even if two IDs are generated in the same millisecond
   const timestamp = Date.now();
   const randomStr = Math.random().toString(36).substring(2, 8);
   return `${prefix}${timestamp}-${randomStr}`;
 };
+=======
+const generateId = (prefix: string = ''): string => `${prefix}${Date.now()}`;
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
 
 const storeInLocalStorage = <T,>(key: string, value: T): void => {
   try {
@@ -117,16 +124,25 @@ interface ChatProviderProps {
 export const ChatProvider: React.FC<ChatProviderProps> = ({
   children,
   apiKey,
+<<<<<<< HEAD
   modelTemperature,
+=======
+  temperature,
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
   maxTokens,
   currentModel
 }) => {
   // State
+<<<<<<< HEAD
   const [messages, setMessages] = useState<Message[]>(() =>
+=======
+  const [messages, setMessages] = useState<Message[]>(() => 
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     retrieveFromLocalStorage<Message[]>(STORAGE_KEYS.MESSAGES, [])
   );
   const [isProcessing, setIsProcessing] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<Message | null>(null);
+<<<<<<< HEAD
   const [currentChatId, setCurrentChatId] = useState<string | null>(() =>
     localStorage.getItem(STORAGE_KEYS.CURRENT_CHAT_ID)
   );
@@ -134,18 +150,35 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     retrieveFromLocalStorage<SavedChat[]>(STORAGE_KEYS.SAVED_CHATS, [])
   );
 
+=======
+  const [currentChatId, setCurrentChatId] = useState<string | null>(() => 
+    localStorage.getItem(STORAGE_KEYS.CURRENT_CHAT_ID)
+  );
+  const [savedChats, setSavedChats] = useState<SavedChat[]>(() => 
+    retrieveFromLocalStorage<SavedChat[]>(STORAGE_KEYS.SAVED_CHATS, [])
+  );
+  
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
   // Refs
   const streamingContentRef = useRef<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
   const { toast } = useToast();
 
   // Reset isProcessing on page visibility changes (if browser tab is switched/hidden)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) return;
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
       // If the page becomes visible again and we're still in processing state
       // for more than 10 seconds, reset the state
       if (isProcessing) {
@@ -157,7 +190,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
             }
             return prev;
           });
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
           setStreamingMessage(prev => {
             if (prev) {
               console.log("Clearing stuck streamingMessage");
@@ -168,12 +205,21 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
         }, 5000);
       }
     };
+<<<<<<< HEAD
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // Fallback timeout to reset processing state if it gets stuck
     let processingTimer: ReturnType<typeof setTimeout> | null = null;
 
+=======
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    // Fallback timeout to reset processing state if it gets stuck
+    let processingTimer: ReturnType<typeof setTimeout> | null = null;
+    
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     if (isProcessing) {
       processingTimer = setTimeout(() => {
         setIsProcessing(prev => {
@@ -183,7 +229,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           }
           return prev;
         });
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
         setStreamingMessage(prev => {
           if (prev) {
             console.log("Clearing stuck streamingMessage via fallback timer");
@@ -193,7 +243,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
         });
       }, 60000); // 1 minute timeout
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (processingTimer) clearTimeout(processingTimer);
@@ -337,13 +391,24 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
     // Default welcome message if no custom bot
     const welcomeMessage: Message = {
+<<<<<<< HEAD
       id: generateId('msg_'),
       role: 'assistant',
       content: 'Hello! I\'m Grok, your AI assistant. How can I help you today?',
+=======
+      id: "welcome",
+      role: "assistant",
+      content: "I'm an AI assistant. How can I help you today?",
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
       timestamp: new Date()
     };
 
     setMessages([welcomeMessage]);
+<<<<<<< HEAD
+=======
+    setCurrentChatId(null);
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_CHAT_ID);
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
   };
 
   // Get chat title from messages
@@ -404,14 +469,18 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     // Save current chat before switching
     saveCurrentChat();
 
+<<<<<<< HEAD
     // Clear any existing custom bot data to prevent conflicts
     sessionStorage.removeItem('activeCustomBot');
     localStorage.removeItem('currentCustomBot');
 
+=======
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     // Load selected chat
     setMessages(chatToLoad.messages);
     setCurrentChatId(chatId);
     localStorage.setItem(STORAGE_KEYS.CURRENT_CHAT_ID, chatId);
+<<<<<<< HEAD
 
     // Check if this chat was with a custom bot (check for system message with instructions)
     const systemMessage = chatToLoad.messages.find(msg => msg.role === 'system');
@@ -432,6 +501,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
         sessionStorage.setItem('activeCustomBot', JSON.stringify(minimumBotInfo));
       }
     }
+=======
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
   };
 
   // Delete saved chat
@@ -452,6 +523,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     });
   };
 
+<<<<<<< HEAD
   // Helper function to enhance system messages with personality guidance
   const enhanceSystemMessageForCustomBot = (instructions: string): string => {
     // Add reinforcement of personality and role to the system message
@@ -517,17 +589,26 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     };
   };
 
+=======
+  /**
+   * Prepares messages for API call
+   */
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
   const prepareApiMessages = (
     userMessage: Message,
     currentMessageList: Message[],
     shouldUseVisionModel: boolean
   ) => {
+<<<<<<< HEAD
     // Create a list of messages to send to the API
+=======
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     const apiMessages: {
       role: MessageRole;
       content: MessageContent;
     }[] = [];
 
+<<<<<<< HEAD
     // Check if there's already a system message in the current messages
     const existingSystemMessage = currentMessageList.find(msg => msg.role === 'system');
 
@@ -580,10 +661,36 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
         apiMessages.push({
           role: 'system',
           content: "You are Grok, an AI assistant. You are helpful, creative, and provide accurate information. Answer questions in a friendly, conversational manner. You have the ability to generate images when users request them, and you can analyze images that users upload. When users ask for image generation, their prompts will be enhanced with AI to create better results. IMPORTANT: If the user asks you to generate an image, tell them you're generating it, but do not respond with 'Here's the image' as the system will automatically display the image after it's generated. NEVER send a separate follow-up message asking what kind of image they want - their request will be processed automatically by the system."
+=======
+    // Add system message
+    apiMessages.push({
+      role: "system",
+      content: "You are Grok, an AI assistant. You are helpful, creative, and provide accurate information. Answer questions in a friendly, conversational manner. IMPORTANT: Always address the user's specific question directly without generic greetings. The user has already been welcomed, so focus immediately on their query."
+    });
+
+    // Check if this is the first message (only welcome message exists)
+    const isFirstMessage = currentMessageList.length === 1 && currentMessageList[0].id === "welcome";
+
+    // Add file context if present
+    if (userMessage.fileContents) {
+      let fileMessage = "";
+
+      if (userMessage.fileNames?.length === 1) {
+        fileMessage = `The user has uploaded a file named "${userMessage.fileNames[0]}". The content of the file is provided below. Use this information to answer their query:\n\n${userMessage.fileContents}`;
+      } else if (userMessage.fileNames && userMessage.fileNames.length > 1) {
+        fileMessage = `The user has uploaded ${userMessage.fileNames.length} files named: ${userMessage.fileNames.join(", ")}. The content of these files is provided below. Use this information to answer their query:\n\n${userMessage.fileContents}`;
+      }
+
+      if (fileMessage) {
+        apiMessages.push({
+          role: "system",
+          content: fileMessage
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
         });
       }
     }
 
+<<<<<<< HEAD
     // Collect file attachments from both current message and history
     let fileContextMessage = "";
 
@@ -652,6 +759,54 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
       content: userMessage.content
     });
 
+=======
+    if (isFirstMessage) {
+      // Add instruction for first message
+      apiMessages.push({
+        role: "system",
+        content: "This is the user's first query. Respond directly to their question without pleasantries or introductions. They have already been greeted."
+      });
+
+      // Add user's message
+      apiMessages.push({
+        role: "user",
+        content: userMessage.content
+      });
+    } else {
+      // For regular conversations, add all non-welcome messages
+      const historyMessages = currentMessageList
+        .filter(msg => msg.id !== "welcome")
+        .map(({ role, content }) => {
+          // For non-vision models, convert complex content to text
+          if (!shouldUseVisionModel && Array.isArray(content)) {
+            // Extract text parts
+            const textContent = content
+              .filter(item => item.type === 'text')
+              .map(item => (item as { type: 'text', text: string }).text)
+              .join('\n');
+
+            // Add note for images
+            const hasImages = content.some(item => item.type === 'image_url');
+            return {
+              role,
+              content: hasImages
+                ? `${textContent}\n[This message contained images that are not shown in the history]`
+                : textContent
+            };
+          }
+
+          // For vision model or string content, pass as is
+          return { role, content };
+        });
+
+      // Add conversation history plus new message
+      apiMessages.push(...historyMessages, {
+        role: "user",
+        content: userMessage.content
+      });
+    }
+
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     return apiMessages;
   };
 
@@ -679,7 +834,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     }
 
     // Generate message ID
+<<<<<<< HEAD
     const id = customMessageId || generateId();
+=======
+    const id = generateId();
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
 
     // Check if vision model should be used
     const shouldUseVisionModel = images.length > 0;
@@ -716,6 +875,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
     const fileNames = files.map(file => file.name);
 
+<<<<<<< HEAD
     // If this is a bot-generated image, create an assistant message directly
     if (isBotGenerated) {
       const botMessage: Message = {
@@ -734,6 +894,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
 
     // Create user message or assistant message for image generation
     const newMessage: Message = {
+=======
+    // Create user message
+    const userMessage: Message = {
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
       id,
       role: isGeneratingImage ? "assistant" : "user",
       content: messageContent,
@@ -747,6 +911,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     // Store current messages
     const currentMessages = [...messages];
 
+<<<<<<< HEAD
     // Add message to UI
     setMessages(prev => [...prev, newMessage]);
 
@@ -759,6 +924,27 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     setIsProcessing(true);
 
     try {
+=======
+    // Add user message to UI
+    setMessages(prev => [...prev, userMessage]);
+    setIsProcessing(true);
+
+    try {
+      // Prepare API messages
+      const apiMessages = prepareApiMessages(userMessage, currentMessages, shouldUseVisionModel);
+
+      // Debug logging
+      console.log("Final API messages:", JSON.stringify(apiMessages.map(m => ({
+        role: m.role,
+        content: typeof m.content === 'string'
+          ? (m.content.length > 50 ? m.content.substring(0, 50) + '...' : m.content)
+          : 'complex content with images'
+      })), null, 2));
+
+      // Select model
+      const modelToUse = shouldUseVisionModel ? "grok-2-vision-latest" : currentModel;
+
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
       // Create streaming message placeholder
       const streamingMessageId = generateId('assistant-');
       const initialStreamingMessage: Message = {
@@ -771,6 +957,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
       setStreamingMessage(initialStreamingMessage);
       streamingContentRef.current = "";
 
+<<<<<<< HEAD
       // Standard model flow (no Sonar)
       try {
         // Prepare API messages
@@ -893,14 +1080,110 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           variant: "destructive",
         });
       }
+=======
+      // Use streaming API with API-aligned callback structure
+      await xaiService.streamResponse(
+        apiMessages,
+        apiKey,
+        {
+          onChunk: (chunk) => {
+            // Update content ref
+            if (typeof streamingContentRef.current === 'string') {
+              streamingContentRef.current += chunk;
+            } else {
+              streamingContentRef.current = chunk;
+            }
+
+            // Update UI
+            setStreamingMessage((prev) => {
+              if (!prev) return initialStreamingMessage;
+              return {
+                ...prev,
+                content: streamingContentRef.current
+              };
+            });
+          },
+          onComplete: () => {
+            // Get final content
+            const finalContent = streamingContentRef.current;
+
+            // Clear streaming state
+            setStreamingMessage(null);
+            setIsProcessing(false);
+            streamingContentRef.current = "";
+
+            // Create final message
+            const finalMessage: Message = {
+              id: generateId('assistant-'),
+              role: "assistant",
+              content: finalContent,
+              timestamp: new Date()
+            };
+
+            // Add to messages
+            setMessages(prev => [...prev, finalMessage]);
+
+            // Handle chat ID and storage
+            setTimeout(() => {
+              try {
+                // Generate ID for new chat
+                if (currentChatId === null && currentMessages.length <= 1) {
+                  const newChatId = generateId('chat-');
+                  setCurrentChatId(newChatId);
+                  localStorage.setItem(STORAGE_KEYS.CURRENT_CHAT_ID, newChatId);
+                }
+
+                // Save updated messages
+                storeInLocalStorage(STORAGE_KEYS.MESSAGES, [...messages, finalMessage]);
+
+                // Update saved chats
+                if (currentChatId) {
+                  saveCurrentChat();
+                }
+              } catch (err) {
+                console.error("Error in onComplete timeout handler:", err);
+                // Ensure isProcessing is definitely false
+                setIsProcessing(false);
+              }
+            }, 100);
+          },
+          onError: (error) => {
+            console.error("Stream error:", error);
+            setIsProcessing(false);
+            setStreamingMessage(null);
+
+            toast({
+              title: "Error",
+              description: error.message || "Failed to get response from Grok.",
+              variant: "destructive",
+            });
+          }
+        },
+        {
+          temperature,
+          max_tokens: maxTokens,
+          model: modelToUse
+        }
+      );
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     } catch (error) {
       console.error("handleSendMessage error:", error);
       setIsProcessing(false);
+<<<<<<< HEAD
+=======
+
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send message to Grok.",
+        variant: "destructive",
+      });
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     }
   };
 
   // Start a new chat
   const handleStartNewChat = () => {
+<<<<<<< HEAD
     // Clear all messages
     setMessages([]);
 
@@ -916,13 +1199,30 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     localStorage.removeItem('currentCustomBot');
 
     // Add a fresh welcome message
+=======
+    if (isProcessing) return;
+
+    // Save current chat
+    saveCurrentChat();
+
+    // Create new chat
+    const newId = generateId('chat-');
+    setCurrentChatId(newId);
+    localStorage.setItem(STORAGE_KEYS.CURRENT_CHAT_ID, newId);
+
+    // Add welcome message
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     addWelcomeMessage();
   };
 
   // Function to regenerate a message
   const regenerateMessage = async (messageId: string) => {
     if (isProcessing) return;
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     // Find the message to regenerate
     const messageIndex = messages.findIndex(msg => msg.id === messageId);
     if (messageIndex === -1 || messages[messageIndex].role !== 'assistant') return;
@@ -930,12 +1230,17 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     // Get the user message that triggered this response
     const userMessageIndex = messageIndex - 1;
     if (userMessageIndex < 0) return;
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
     const userMessage = messages[userMessageIndex];
 
     // Remove the assistant message and all messages after it
     const previousMessages = messages.slice(0, messageIndex);
     setMessages(previousMessages);
+<<<<<<< HEAD
 
     // Re-process the user message to generate a new response
     setIsProcessing(true);
@@ -943,11 +1248,24 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     try {
       // Check if we should use vision model
       const shouldUseVisionModel = Array.isArray(userMessage.content) &&
+=======
+    
+    // Re-process the user message to generate a new response
+    setIsProcessing(true);
+    
+    try {
+      // Check if we should use vision model
+      const shouldUseVisionModel = Array.isArray(userMessage.content) && 
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
         userMessage.content.some(item => item.type === 'image_url');
 
       // Prepare API messages
       const apiMessages = prepareApiMessages(userMessage, previousMessages, shouldUseVisionModel);
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
       // Select model
       const modelToUse = shouldUseVisionModel ? "grok-2-vision-latest" : currentModel;
 
@@ -976,7 +1294,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
               streamingContentRef.current = chunk;
             }
 
+<<<<<<< HEAD
             // Update UI with a more natural format for images
+=======
+            // Update UI
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
             setStreamingMessage((prev) => {
               if (!prev) return initialStreamingMessage;
               return {
@@ -1018,7 +1340,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
           }
         },
         {
+<<<<<<< HEAD
           temperature: modelTemperature,
+=======
+          temperature,
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
           max_tokens: maxTokens,
           model: modelToUse
         }
@@ -1026,7 +1352,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     } catch (error) {
       console.error("Error regenerating message:", error);
       setIsProcessing(false);
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to regenerate message. Please try again.",
@@ -1035,6 +1365,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     }
   };
 
+<<<<<<< HEAD
   // Function to update a message with a generated image
   const updateMessageWithImage = (messageId: string, text: string, imageUrl: string) => {
     setMessages(prev =>
@@ -1072,6 +1403,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({
     }, 100);
   };
 
+=======
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
   // Context value
   const contextValue: ChatContextType = {
     messages,
@@ -1109,4 +1442,8 @@ export const useChatContext = () => {
     throw new Error('useChatContext must be used within a ChatProvider');
   }
   return context;
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> 112dabca2295b5eb3f9d6c79200bf4cebb65b263
