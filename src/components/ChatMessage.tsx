@@ -1,9 +1,41 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bot, User, Copy, ThumbsUp, ThumbsDown, Check, Play, RefreshCw, XCircle, Clock } from "lucide-react";
+import { Bot, User, Copy, ThumbsUp, ThumbsDown, Check, Play, RefreshCw, XCircle, Clock, RotateCw, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+// Custom hook to get the active bot name
+const useCustomBotName = () => {
+  const [customBotName, setCustomBotName] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const checkForCustomBot = () => {
+      const customBotString = sessionStorage.getItem('activeCustomBot');
+      if (customBotString) {
+        try {
+          const botData = JSON.parse(customBotString);
+          setCustomBotName(botData.name);
+        } catch (error) {
+          console.error('Failed to parse custom bot data:', error);
+          setCustomBotName(null);
+        }
+      } else {
+        setCustomBotName(null);
+      }
+    };
+    
+    checkForCustomBot();
+    
+    // Check again when session storage changes
+    window.addEventListener('storage', checkForCustomBot);
+    return () => {
+      window.removeEventListener('storage', checkForCustomBot);
+    };
+  }, []);
+  
+  return customBotName;
+};
 
 interface ChatMessageProps {
   message: {
@@ -18,7 +50,12 @@ interface ChatMessageProps {
       };
     }[];
     timestamp: Date;
+    fileContents?: string; // File contents for file-based messages
+    fileNames?: string[]; // File names for file-based messages
+    isGeneratingImage?: boolean; // Flag for generating image state
+    imagePrompt?: string; // The original image prompt
   };
+  onRegenerate?: () => void;
 }
 
 // Define a more generic code component props interface
@@ -171,93 +208,78 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   };
   
   return (
-    <div className="relative group my-4 border border-gray-600 rounded-md">
-      {/* Remove debug banner */}
-      
-      <div className="absolute right-2 top-2 z-10 flex space-x-2">
-        {/* Show play button for previewable languages */}
-        {isPreviewable && (
+    <div className="relative rounded-md overflow-hidden my-4 border border-gray-300 dark:border-gray-700">
+      <div className="flex items-center justify-between py-1 px-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs">
+        <span className="font-mono">{language}</span>
+        <div className="flex items-center space-x-1">
+          {isPreviewable && (
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+              title={showPreview ? "Hide preview" : "Show preview"}
+            >
+              <Play size={14} className={showPreview ? "text-green-500" : ""} />
+            </button>
+          )}
           <button
-            onClick={() => {
-              if (showPreview) {
-                runCode(); // Re-run the code
-              } else {
-                runCode(); // Run for the first time
-              }
-            }}
-            disabled={isRunning}
-            className="flex items-center justify-center h-8 w-8 rounded bg-blue-600 hover:bg-blue-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            aria-label={showPreview ? "Rerun code" : "Run code"}
-            title={showPreview ? "Rerun code" : "Run code"}
+            onClick={handleCopy}
+            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            title="Copy code"
           >
-            {isRunning ? <RefreshCw size={16} className="animate-spin" /> : (showPreview ? <RefreshCw size={16} /> : <Play size={16} />)}
+            {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
           </button>
-        )}
-        <button
-          onClick={handleCopy}
-          className="flex items-center justify-center h-8 w-8 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          aria-label="Copy code"
-          title="Copy code"
-        >
-          {copied ? <Check size={16} /> : <Copy size={16} />}
-        </button>
+        </div>
       </div>
-      <div className="absolute top-0 left-0 px-3 py-1 text-xs font-semibold bg-gray-800 text-gray-300 rounded-tl rounded-br">
-        {language}
-      </div>
+      
       <SyntaxHighlighter
         language={language}
         style={vscDarkPlus}
-        showLineNumbers={true}
-        wrapLines={true}
-        lineNumberStyle={{ minWidth: '2.5em', textAlign: 'right', marginRight: '1em', color: '#6e7681', userSelect: 'none' }}
-        customStyle={{ 
-          margin: 0, 
-          padding: '2.5rem 1rem 1rem 0', 
-          borderRadius: showPreview ? '0.375rem 0.375rem 0 0' : '0.375rem', 
-          fontSize: '0.875rem' 
-        }}
-        className={cn("rounded-md", showPreview ? "rounded-b-none" : "")}
+        customStyle={{ margin: 0 }}
       >
         {value}
       </SyntaxHighlighter>
       
+      {/* Preview section (if enabled) */}
       {showPreview && (
-        <div className="relative">
-          <button 
-            onClick={() => setShowPreview(false)} 
-            className="absolute right-2 top-2 text-gray-400 hover:text-gray-200"
-            aria-label="Close preview"
-          >
-            <XCircle size={16} />
-          </button>
+        <div className="border-t border-gray-300 dark:border-gray-700">
+          <div className="flex items-center justify-between py-1 px-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs">
+            <span>Output</span>
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={runCode}
+                disabled={isRunning}
+                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                title="Run code again"
+              >
+                <RefreshCw size={14} className={isRunning ? "animate-spin" : ""} />
+              </button>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                title="Close preview"
+              >
+                <XCircle size={14} />
+              </button>
+            </div>
+          </div>
+          
           <div 
             ref={outputRef}
-            className={cn(
-              "p-4 bg-gray-950 text-gray-200 rounded-b-md border-t border-gray-800 max-h-60 overflow-y-auto font-mono text-sm",
-              hasError ? "border-l-2 border-l-red-500" : ""
-            )}
+            className="bg-black text-white p-3 font-mono text-sm overflow-auto max-h-[300px]"
+            style={{ maxHeight: '300px' }}
           >
-            {previewOutput.length > 0 ? (
-              ['html', 'svg', 'css'].includes(language.toLowerCase()) ? (
-                <div 
-                  className="preview-container" 
-                  dangerouslySetInnerHTML={{ __html: previewOutput.join('') }} 
-                />
-              ) : (
-                previewOutput.map((line, index) => (
-                  <div key={index} className={cn(
-                    "mb-1 whitespace-pre-wrap",
-                    line.startsWith("Error:") ? "text-red-400" : 
-                    line.startsWith("Warning:") ? "text-yellow-400" : 
-                    line.startsWith("Info:") ? "text-blue-400" : "text-green-400"
-                  )}>
-                    &gt; {line}
-                  </div>
-                ))
-              )
-            ) : (
+            {isRunning ? (
               <div className="text-gray-400">Running code...</div>
+            ) : previewOutput.length > 0 ? (
+              previewOutput.map((output, i) => (
+                <div 
+                  key={i} 
+                  className={hasError && i === previewOutput.length - 1 ? "text-red-400" : ""}
+                  dangerouslySetInnerHTML={{ __html: output }}
+                />
+              ))
+            ) : (
+              <div className="text-gray-400">No output</div>
             )}
           </div>
         </div>
@@ -266,10 +288,10 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   );
 };
 
-const ChatMessage = ({ message }: ChatMessageProps) => {
+const ChatMessage = ({ message, onRegenerate }: ChatMessageProps) => {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
-  const [feedback, setFeedback] = useState<'like' | 'dislike' | null>(null);
+  const customBotName = useCustomBotName();
   
   // Format timestamp for display
   const formatTimestamp = (timestamp: Date) => {
@@ -286,7 +308,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
     
     // Format: HH:MM AM/PM
     return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
+      hour: '2-digit',
       minute: '2-digit',
       hour12: true 
     });
@@ -296,10 +318,10 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
     const textContent = typeof message.content === 'string' 
       ? message.content 
       : message.content
-          .filter(item => item.type === 'text')
-          .map(item => (item as {type: 'text', text: string}).text)
-          .join('\n');
-          
+         .filter(item => item.type === 'text')
+         .map(item => (item as {type: 'text', text: string}).text)
+         .join('\n');
+    
     navigator.clipboard.writeText(textContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -307,123 +329,121 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
   
   // Render message content
   const renderContent = () => {
+    // Extract content based on type
+    let contentToRender = "";
+    let imageUrls: string[] = [];
+    
+    // Handle complex content structure that might include images
     if (typeof message.content === 'string') {
-      // For text-only messages, render with original formatting
+      contentToRender = message.content;
+    } else if (Array.isArray(message.content)) {
+      // For complex content structure (used in vision model)
+      message.content.forEach(item => {
+        if (item.type === 'text' && item.text) {
+          contentToRender += item.text;
+        } else if (item.type === 'image_url' && item.image_url) {
+          imageUrls.push(item.image_url.url);
+        }
+      });
+    }
+    
+    // If message has file contents, render them
+    if (message.fileContents) {
       return (
-        <div className="prose dark:prose-invert prose-sm md:prose-base text-gray-800 dark:text-gray-300 max-w-none">
-          <ReactMarkdown
-            components={{
-              h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-6 mb-4" {...props} />,
-              h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-5 mb-3" {...props} />,
-              h3: ({ node, ...props }) => <h3 className="text-lg font-bold mt-4 mb-2" {...props} />,
-              h4: ({ node, ...props }) => <h4 className="text-base font-bold mt-3 mb-1" {...props} />,
-              p: ({ node, ...props }) => <p className="my-3" {...props} />,
-              ul: ({ node, ...props }) => <ul className="list-disc pl-6 my-3" {...props} />,
-              ol: ({ node, ...props }) => <ol className="list-decimal pl-6 my-3" {...props} />,
-              li: ({ node, ...props }) => <li className="my-1" {...props} />,
-              a: ({ node, ...props }) => <a className="text-blue-600 dark:text-blue-400 hover:underline" {...props} />,
-              strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
-              em: ({ node, ...props }) => <em className="italic" {...props} />,
-              blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-gray-300 dark:border-gray-700 pl-4 italic my-4" {...props} />,
-              code: ({ node, inline, className, children, ...props }: CodeComponentProps) => {
-                const match = /language-(\w+)/.exec(className || '');
-                return !inline && match ? (
-                  <CodeBlock 
-                    language={match[1]} 
-                    value={String(children).replace(/\n$/, '')} 
-                  />
-                ) : (
-                  <code className="bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-sm" {...props}>
-                    {children}
-                  </code>
-                );
-              },
-              table: ({ node, ...props }) => <table className="border-collapse w-full my-4" {...props} />,
-              thead: ({ node, ...props }) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
-              tbody: ({ node, ...props }) => <tbody {...props} />,
-              tr: ({ node, ...props }) => <tr className="border-b border-gray-200 dark:border-gray-700" {...props} />,
-              th: ({ node, ...props }) => <th className="text-left p-2 font-bold" {...props} />,
-              td: ({ node, ...props }) => <td className="p-2" {...props} />,
-            }}
-          >
-            {message.content}
-          </ReactMarkdown>
+        <div>
+          <div className="mb-2">{contentToRender}</div>
+          <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md overflow-auto max-h-[400px] whitespace-pre-wrap font-mono text-sm">
+            {message.fileContents}
+          </div>
+          <div className="mt-1 text-xs text-gray-500">
+            Files: {message.fileNames?.join(', ')}
+          </div>
         </div>
       );
-    } else {
-      // Handle array of content (text + images)
-      const textContent = message.content
-        .filter(item => item.type === 'text')
-        .map(item => (item as {type: 'text', text: string}).text)
-        .join('\n');
-        
-      const imageContents = message.content
-        .filter(item => item.type === 'image_url' && item.image_url?.url)
-        .map(item => (item as {type: 'image_url', image_url: {url: string}}).image_url.url);
-      
-      return (
-        <>
-          {/* Text content */}
-          {textContent && (
-            <div className="prose dark:prose-invert prose-sm md:prose-base text-gray-800 dark:text-gray-300 max-w-none">
-              <ReactMarkdown
-                components={{
-                  h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-6 mb-4" {...props} />,
-                  h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-5 mb-3" {...props} />,
-                  h3: ({ node, ...props }) => <h3 className="text-lg font-bold mt-4 mb-2" {...props} />,
-                  h4: ({ node, ...props }) => <h4 className="text-base font-bold mt-3 mb-1" {...props} />,
-                  p: ({ node, ...props }) => <p className="my-3" {...props} />,
-                  ul: ({ node, ...props }) => <ul className="list-disc pl-6 my-3" {...props} />,
-                  ol: ({ node, ...props }) => <ol className="list-decimal pl-6 my-3" {...props} />,
-                  li: ({ node, ...props }) => <li className="my-1" {...props} />,
-                  a: ({ node, ...props }) => <a className="text-blue-600 dark:text-blue-400 hover:underline" {...props} />,
-                  strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
-                  em: ({ node, ...props }) => <em className="italic" {...props} />,
-                  blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-gray-300 dark:border-gray-700 pl-4 italic my-4" {...props} />,
-                  code: ({ node, inline, className, children, ...props }: CodeComponentProps) => {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                      <CodeBlock 
-                        language={match[1]} 
-                        value={String(children).replace(/\n$/, '')} 
-                      />
-                    ) : (
-                      <code className="bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 text-sm" {...props}>
-                        {children}
-                      </code>
-                    );
-                  },
-                  table: ({ node, ...props }) => <table className="border-collapse w-full my-4" {...props} />,
-                  thead: ({ node, ...props }) => <thead className="bg-gray-100 dark:bg-gray-800" {...props} />,
-                  tbody: ({ node, ...props }) => <tbody {...props} />,
-                  tr: ({ node, ...props }) => <tr className="border-b border-gray-200 dark:border-gray-700" {...props} />,
-                  th: ({ node, ...props }) => <th className="text-left p-2 font-bold" {...props} />,
-                  td: ({ node, ...props }) => <td className="p-2" {...props} />,
-                }}
-              >
-                {textContent}
-              </ReactMarkdown>
-            </div>
-          )}
-          
-          {/* Image content */}
-          {imageContents.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {imageContents.map((imageSrc, index) => (
-                <div key={index} className="relative">
-                  <img 
-                    src={imageSrc} 
-                    alt={`Image ${index + 1}`} 
-                    className="rounded-md border border-gray-300 dark:border-gray-700"
-                    style={{ maxHeight: '300px', maxWidth: '100%', objectFit: 'contain' }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      );
     }
+    
+    // Replace any user mentions with styled spans
+    const formattedContent = contentToRender.replace(
+      /@([a-zA-Z0-9_]+)/g, 
+      "<span class='text-blue-500 dark:text-blue-400'>@$1</span>"
+    );
+    
+    return (
+      <div className="prose dark:prose-invert prose-sm max-w-none">
+        <ReactMarkdown
+          components={{
+            code: ({node, inline, className, children, ...props}: CodeComponentProps) => {
+              const match = /language-(\w+)/.exec(className || '');
+              
+              if (inline) {
+                return (
+                  <code className="font-mono bg-gray-100 dark:bg-gray-800 p-0.5 rounded text-sm" {...props}>
+                    {String(children).replace(/\n$/, '')}
+                  </code>
+                );
+              }
+              
+              const language = match ? match[1] : '';
+              const value = String(children).replace(/\n$/, '');
+              
+              if (value.length > 5) {
+                return <CodeBlock language={language || 'text'} value={value} />;
+              }
+              
+              return (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            },
+            // Add styles to links
+            a: ({node, ...props}) => (
+              <a 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-600 dark:text-blue-400 hover:underline" 
+                {...props}
+              />
+            ),
+          }}
+        >
+          {formattedContent}
+        </ReactMarkdown>
+        
+        {/* Display image generation placeholder */}
+        {message.isGeneratingImage && (
+          <div className="mt-3">
+            <div className="relative w-full h-0 pb-[56.25%] bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden">
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="animate-pulse flex flex-col items-center">
+                  <Image size={48} className="text-gray-400 dark:text-gray-600 mb-3" />
+                  <div className="h-4 w-28 bg-gray-300 dark:bg-gray-700 rounded-md mb-2"></div>
+                  <div className="h-3 w-48 bg-gray-200 dark:bg-gray-800 rounded-md"></div>
+                </div>
+                <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-gray-500 dark:text-gray-400">
+                  Generating image of {message.imagePrompt ? <strong>{message.imagePrompt}</strong> : ''}...
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Display images if any */}
+        {imageUrls.length > 0 && (
+          <div className="mt-3 grid grid-cols-1 gap-3">
+            {imageUrls.map((url, index) => (
+              <div key={`img-${index}`} className="relative">
+                <img 
+                  src={url} 
+                  alt={`Generated image ${index + 1}`} 
+                  className="rounded-md w-full object-contain bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700" 
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
   
   return (
@@ -446,6 +466,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
           "min-w-0",
           isUser ? "max-w-[85%]" : "flex-1"
         )}>
+          {/* Message header */}
           <div className={cn(
             "flex items-center mb-1 text-sm font-medium",
             isUser && "justify-end" // Right align user message header
@@ -458,16 +479,8 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
             )}
             
             <span className="text-gray-900 dark:text-gray-100">
-              {isUser ? "You" : "Grok"}
+              {isUser ? "You" : (customBotName || "Grok")}
             </span>
-            
-            {!isUser && (
-              <div className="ml-2 flex items-center">
-                <span className="text-xs px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded font-normal">
-                  AI
-                </span>
-              </div>
-            )}
             
             {/* Timestamp display */}
             <div className="ml-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
@@ -475,49 +488,45 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
               <span>{formatTimestamp(message.timestamp)}</span>
             </div>
           </div>
+
+          {/* File content notice */}
+          {message.fileContents && (
+            <div className="mb-4 p-2 rounded-md bg-gray-100 dark:bg-gray-600/40 border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
+                {message.fileNames && message.fileNames.length > 0 ? (
+                  <span>Files: {message.fileNames.join(', ')}</span>
+                ) : (
+                  <span>File content attached</span>
+                )}
+              </div>
+            </div>
+          )}
           
           {/* Render message content */}
           {renderContent()}
           
-          {/* Message actions - only for assistant messages */}
-          {!isUser && (
-            <div className="mt-3 flex items-center gap-2 text-gray-500 dark:text-gray-400">
+          {/* Message actions */}
+          <div className="mt-3 flex items-center gap-2 text-gray-500 dark:text-gray-400">
+            <button 
+              onClick={copyToClipboard}
+              className="p-1 hover:text-gray-700 dark:hover:text-gray-200 rounded"
+              aria-label="Copy to clipboard"
+            >
+              <Copy size={16} />
+              {copied && <span className="ml-1 text-xs">Copied!</span>}
+            </button>
+            
+            {/* Regenerate button - only for assistant messages */}
+            {!isUser && onRegenerate && (
               <button
-                onClick={copyToClipboard}
+                onClick={onRegenerate}
                 className="p-1 hover:text-gray-700 dark:hover:text-gray-200 rounded"
-                aria-label="Copy to clipboard"
+                aria-label="Regenerate response"
               >
-                <Copy size={16} />
-                {copied && <span className="ml-1 text-xs">Copied!</span>}
+                <RotateCw size={16} />
               </button>
-              
-              <button
-                onClick={() => setFeedback(feedback === 'like' ? null : 'like')}
-                className={cn(
-                  "p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700", 
-                  feedback === 'like' 
-                    ? "text-green-500 dark:text-green-400" 
-                    : "hover:text-gray-700 dark:hover:text-gray-200"
-                )}
-                aria-label="Thumbs up"
-              >
-                <ThumbsUp size={16} />
-              </button>
-              
-              <button 
-                onClick={() => setFeedback(feedback === 'dislike' ? null : 'dislike')}
-                className={cn(
-                  "p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700", 
-                  feedback === 'dislike' 
-                    ? "text-red-500 dark:text-red-400" 
-                    : "hover:text-gray-700 dark:hover:text-gray-200"
-                )}
-                aria-label="Thumbs down"
-              >
-                <ThumbsDown size={16} />
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -6,18 +6,28 @@ import { ProcessedFile } from './FileUploader';
 /**
  * ChatControls component for handling user input and submission
  */
-const ChatControls = () => {
-  const { handleSendMessage, isProcessing } = useChatContext();
+const ChatControls: React.FC = () => {
+  const { handleSendMessage, isProcessing, updateMessageWithImage } = useChatContext();
 
   // Define a handler that accepts files
-  const handleSendWithFiles = (message: string, images: string[], files: ProcessedFile[]) => {
-    handleSendMessage(message, images, files);
+  const handleSendWithFiles = (
+    message: string, 
+    images: string[], 
+    files: ProcessedFile[], 
+    isBotGenerated?: boolean, 
+    isImageRequest?: boolean,
+    customMessageId?: string,
+    isGeneratingImage?: boolean,
+    imagePrompt?: string
+  ) => {
+    handleSendMessage(message, images, files, isBotGenerated, isImageRequest, customMessageId, isGeneratingImage, imagePrompt);
   };
 
   return (
-    <div className="w-full border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-2">
+    <div className="sticky bottom-0 z-10 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 p-4">
       <ChatInput 
         onSendMessage={handleSendWithFiles} 
+        onUpdateMessageWithImage={updateMessageWithImage}
         isProcessing={isProcessing} 
       />
     </div>

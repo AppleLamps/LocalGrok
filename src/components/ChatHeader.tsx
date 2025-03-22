@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { FileDown, Sparkles, ChevronDown, Menu } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileDown, Sparkles, ChevronDown, Menu, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useSettingsContext } from '@/contexts/SettingsContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { useChatContext } from '@/contexts/ChatContext';
 import html2pdf from 'html2pdf.js';
 
@@ -9,14 +9,41 @@ interface ChatHeaderProps {
   toggleSidebar: () => void;
 }
 
+// Type definition for custom bot
+interface CustomBot {
+  name: string;
+  description: string;
+  instructions: string;
+}
+
 /**
  * ChatHeader component for the top navigation bar with model selection
  */
 const ChatHeader = ({ toggleSidebar }: ChatHeaderProps) => {
-  const { currentModel, setCurrentModel } = useSettingsContext();
+  const { apiKey } = useSettings();
   const { messages, currentChatId, savedChats } = useChatContext();
-  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [activeCustomBot, setActiveCustomBot] = useState<CustomBot | null>(null);
+
+  // Check if there's an active custom bot on component mount and when messages change
+  useEffect(() => {
+    const checkForCustomBot = () => {
+      const customBotString = sessionStorage.getItem('activeCustomBot');
+      if (customBotString) {
+        try {
+          const botData = JSON.parse(customBotString);
+          setActiveCustomBot(botData);
+        } catch (error) {
+          console.error('Failed to parse custom bot data:', error);
+          setActiveCustomBot(null);
+        }
+      } else {
+        setActiveCustomBot(null);
+      }
+    };
+    
+    checkForCustomBot();
+  }, [messages]); // Re-check when messages change
 
   // Get chat title for the current chat
   const getChatTitle = () => {
@@ -143,35 +170,27 @@ const ChatHeader = ({ toggleSidebar }: ChatHeaderProps) => {
         <Menu size={18} />
       </button>
 
-      {/* Model selector dropdown */}
-      <div className="relative">
-        <button
-          onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-          className="flex items-center space-x-1 text-sm font-medium text-gray-700 dark:text-gray-200 py-1 px-3 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-        >
-          <Sparkles size={16} className="text-green-500 mr-2" />
-          <span>{currentModel === "grok-2-latest" ? "Grok-2" : currentModel}</span>
-          <ChevronDown size={16} />
-        </button>
-
-        {isModelDropdownOpen && (
-          <div className="absolute top-full left-0 mt-1 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 z-10">
-            <div className="py-1">
-              <button
-                onClick={() => {
-                  setCurrentModel("grok-2-latest");
-                  setIsModelDropdownOpen(false);
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <div className="flex items-center">
-                  <Sparkles size={16} className="text-green-500 mr-2" />
-                  <span>Grok-2</span>
-                </div>
-              </button>
-            </div>
+      {/* Active Bot Indicator */}
+      <div className="flex-1 flex justify-center items-center">
+        {activeCustomBot ? (
+          <div className="flex items-center px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
+            <Bot size={16} className="mr-2" />
+            <span>Active Bot: {activeCustomBot.name}</span>
+          </div>
+        ) : (
+          <div className="flex items-center px-3 py-1 text-gray-500 dark:text-gray-400 text-sm">
+            <Bot size={16} className="mr-2" />
+            <span>Standard Assistant</span>
           </div>
         )}
+      </div>
+
+      {/* Model indicator */}
+      <div className="relative">
+        <div className="flex items-center space-x-1 text-sm font-medium text-gray-700 dark:text-gray-200 py-1 px-3 rounded-md border border-gray-200 dark:border-gray-700">
+          <Sparkles size={16} className="text-green-500 mr-2" />
+          <span>Grok-2</span>
+        </div>
       </div>
       
       <div className="flex items-center space-x-2">

@@ -5,14 +5,14 @@ import ChatSidebar from "./ChatSidebar";
 import ChatMessages from "./ChatMessages";
 import ChatControls from "./ChatControls";
 import { ChatProvider } from "@/contexts/ChatContext";
-import { SettingsProvider, useSettingsContext } from "@/contexts/SettingsContext";
+import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 
 /**
  * Helper consumer component to access settings context
  */
-const SettingsConsumer = ({ children }: { children: (settings: ReturnType<typeof useSettingsContext>) => React.ReactNode }) => {
-  const settings = useSettingsContext();
+const SettingsConsumer = ({ children }: { children: (settings: ReturnType<typeof useSettings>) => React.ReactNode }) => {
+  const settings = useSettings();
   return <>{children(settings)}</>;
 };
 
@@ -72,9 +72,9 @@ const ChatInterface: React.FC = () => {
         {(settingsProps) => (
           <ChatProvider 
             apiKey={settingsProps.apiKey}
-            temperature={settingsProps.temperature}
+            modelTemperature={settingsProps.modelTemperature}
             maxTokens={settingsProps.maxTokens}
-            currentModel={settingsProps.currentModel}
+            currentModel="grok-2-latest"
           >
             <div className="flex h-screen bg-white dark:bg-gray-900 overflow-hidden">
               {/* Responsive layout with different behavior for mobile and desktop */}
@@ -94,7 +94,7 @@ const ChatInterface: React.FC = () => {
                   </div>
                   
                   <div className={cn(
-                    "fixed inset-y-0 left-0 z-40 w-64 transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]",
+                    "fixed inset-y-0 left-0 z-40 w-64 transition-transform duration-300 ease-in-out",
                     sidebarVisible ? "translate-x-0" : "-translate-x-full"
                   )}>
                     <ChatSidebar 
@@ -114,7 +114,7 @@ const ChatInterface: React.FC = () => {
                 // Desktop layout - sidebar pushes content
                 <>
                   <div className={cn(
-                    "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)]",
+                    "transition-all duration-300 ease-in-out",
                     sidebarVisible ? "w-64 shrink-0" : "w-0 shrink-0 overflow-hidden"
                   )}>
                     <ChatSidebar 
@@ -132,12 +132,12 @@ const ChatInterface: React.FC = () => {
                 </>
               )}
 
-              {/* Settings Panel */}
+              {/* Settings Panel - Now using the context value */}
               <SettingsPanel
                 isOpen={settingsProps.settingsOpen}
                 onClose={() => settingsProps.setSettingsOpen(false)}
                 apiKey={settingsProps.apiKey}
-                temperature={settingsProps.temperature}
+                temperature={settingsProps.modelTemperature}
                 maxTokens={settingsProps.maxTokens}
                 onSave={settingsProps.handleSaveSettings}
               />

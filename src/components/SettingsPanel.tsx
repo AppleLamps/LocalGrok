@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { X, Key, Save, AlertCircle, CheckCircle, LucideIcon, Zap } from "lucide-react";
+import { X, Key, Save, AlertCircle, CheckCircle, LucideIcon, Zap, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { xaiService } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { ChevronsUpDown, Eye, EyeOff } from "lucide-react";
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -13,20 +17,21 @@ interface SettingsPanelProps {
   maxTokens?: number;
 }
 
-const SettingsPanel = ({ 
-  isOpen, 
+const SettingsPanel: React.FC<SettingsPanelProps> = ({
+  isOpen,
   onClose, 
   apiKey, 
   onSave,
   temperature = 0.7,
   maxTokens = 8192
-}: SettingsPanelProps) => {
+}) => {
   const [inputApiKey, setInputApiKey] = useState(apiKey);
   const [showApiKey, setShowApiKey] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [temperatureValue, setTemperatureValue] = useState(temperature);
   const [maxTokensValue, setMaxTokensValue] = useState(maxTokens);
   const [isTestingKey, setIsTestingKey] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,31 +63,37 @@ const SettingsPanel = ({
 
     setIsTestingKey(true);
     try {
-      console.log("Testing API key...");
-      // Simple test message
-      const message = {
-        role: "user" as const,
-        content: "Hello, this is a test message to verify my API key is working."
-      };
-      
-      // Use a clean, trimmed version of the API key
-      const cleanApiKey = inputApiKey.trim();
-      await xaiService.sendMessage([message], cleanApiKey);
-      
-      toast({
-        title: "API Key Valid",
-        description: "Your API key has been successfully verified!",
-        variant: "default",
+      console.log("Testing XAI API key...");
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${inputApiKey}`
+        },
+        body: JSON.stringify({
+          model: "grok-2",
+          messages: [{ role: "user", content: "Hello" }],
+          max_tokens: 10
+        })
       });
-    } catch (error) {
-      let errorMessage = "Failed to verify API key";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
       
+      if (response.ok) {
+        toast({
+          title: "API Key Valid",
+          description: "Your XAI API key is working correctly!",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "API Key Invalid",
+          description: error.error?.message || "Your API key appears to be invalid.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "API Key Invalid",
-        description: errorMessage,
+        title: "Connection Error",
+        description: "Could not connect to the API server. Please check your internet connection.",
         variant: "destructive",
       });
     } finally {
@@ -93,23 +104,12 @@ const SettingsPanel = ({
   const StatusMessage = ({ status }: { status: typeof saveStatus }) => {
     if (status === "idle") return null;
     
-    const config = {
-      success: {
-        message: "Settings saved successfully",
-        className: "text-green-500 dark:text-green-400",
-        icon: CheckCircle as LucideIcon,
-      },
-      error: {
-        message: "Failed to save settings",
-        className: "text-red-500 dark:text-red-400",
-        icon: AlertCircle as LucideIcon,
-      },
-    }[status];
-    
     return (
-      <div className={cn("flex items-center gap-1 mt-2 text-sm", config.className)}>
-        <config.icon size={14} />
-        <span>{config.message}</span>
+      <div className={cn(
+        "text-sm px-4 py-2 rounded-md mt-4",
+        status === "success" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+      )}>
+        {status === "success" ? "Settings saved successfully!" : "Error saving settings"}
       </div>
     );
   };
@@ -117,139 +117,140 @@ const SettingsPanel = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-500/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full transform max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-0 bg-white dark:bg-gray-800 z-10">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Settings</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
-            aria-label="Close settings"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        
-        <div className="p-6 space-y-6">
-          {/* API Key Settings */}
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                Model: grok-2-latest
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                This application uses the XAI API with the grok-2-latest model. You'll need to provide your XAI API key below.
-              </p>
-            </div>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Settings</h2>
+            <button 
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
           
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              XAI API Key
-            </label>
-            <div className="relative">
-              <input
-                type={showApiKey ? "text" : "password"}
-                value={inputApiKey}
-                onChange={(e) => setInputApiKey(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2 px-3 pr-10 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                placeholder="Enter your XAI API key..."
-              />
-              <Key size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <label className="flex items-center text-sm text-gray-500 dark:text-gray-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showApiKey}
-                  onChange={() => setShowApiKey(!showApiKey)}
-                  className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded"
-                />
-                Show API key
+          <div className="space-y-6">
+            {/* API Key Section */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                xAI API Key
               </label>
-              
-              <button
-                onClick={testApiKey}
-                disabled={isTestingKey}
-                className={cn(
-                  "text-sm px-3 py-1 rounded-md flex items-center gap-1",
-                  isTestingKey 
-                    ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed" 
-                    : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
-                )}
-              >
-                <Zap size={14} />
-                {isTestingKey ? "Testing..." : "Test API Key"}
-              </button>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Your API key for accessing the xAI (Grok) API. Required for all functionality.
+              </p>
+              <div className="flex relative">
+                <Input
+                  type={showApiKey ? "text" : "password"}
+                  value={inputApiKey}
+                  onChange={(e) => setInputApiKey(e.target.value)}
+                  className="pr-10"
+                  placeholder="Enter your xAI API key..."
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500"
+                >
+                  {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Your API key is stored locally on your device.
+                </div>
+                
+                <button
+                  onClick={testApiKey}
+                  disabled={isTestingKey}
+                  className={cn(
+                    "text-sm px-3 py-1 rounded-md flex items-center gap-1",
+                    isTestingKey 
+                      ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed" 
+                      : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                  )}
+                >
+                  <Zap size={14} />
+                  {isTestingKey ? "Testing..." : "Test API Key"}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Get your API key at <a 
+                  href="https://x.ai" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  x.ai
+                </a>.
+              </p>
             </div>
             
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Your XAI API key is stored locally on your device and never sent to our servers. You can obtain an API key from the XAI developer portal.
-            </p>
-            
-            {/* Model Settings */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-6">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Model Settings
-              </h3>
+            {/* Advanced Settings */}
+            <div className="space-y-3">
+              <button
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                <ChevronsUpDown size={16} />
+                <span>{showAdvanced ? "Hide" : "Show"} Advanced Settings</span>
+              </button>
               
-              {/* Temperature slider */}
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-sm text-gray-700 dark:text-gray-300">
-                    Temperature: {temperatureValue.toFixed(1)}
-                  </label>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {temperatureValue < 0.7 ? "More precise" : temperatureValue > 1.3 ? "More creative" : "Balanced"}
-                  </span>
+              {showAdvanced && (
+                <div className="space-y-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+                  {/* Temperature Slider */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Temperature
+                      </label>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {temperatureValue.toFixed(1)}
+                      </span>
+                    </div>
+                    <Slider 
+                      value={[temperatureValue]} 
+                      min={0} 
+                      max={1} 
+                      step={0.1} 
+                      onValueChange={(value) => setTemperatureValue(value[0])}
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>0</span>
+                      <span>1</span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Higher values produce more varied outputs, lower values are more deterministic.
+                    </p>
+                  </div>
+                  
+                  {/* Max Tokens Slider */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Max Tokens
+                      </label>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {maxTokensValue}
+                      </span>
+                    </div>
+                    <Slider 
+                      value={[maxTokensValue]} 
+                      min={1024} 
+                      max={131072} 
+                      step={1024} 
+                      onValueChange={(value) => setMaxTokensValue(value[0])}
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span>1K</span>
+                      <span>128K</span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Maximum length of the model's response. Higher values allow for longer responses.
+                    </p>
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                  value={temperatureValue}
-                  onChange={(e) => setTemperatureValue(parseFloat(e.target.value))}
-                  className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 dark:bg-gray-700"
-                />
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>0</span>
-                  <span>1</span>
-                  <span>2</span>
-                </div>
-              </div>
-              
-              {/* Max tokens slider */}
-              <div className="mb-2">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-sm text-gray-700 dark:text-gray-300">
-                    Maximum Length: {maxTokensValue.toLocaleString()}
-                  </label>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    tokens
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="1024"
-                  max="131072"
-                  step="1024"
-                  value={maxTokensValue}
-                  onChange={(e) => setMaxTokensValue(parseInt(e.target.value))}
-                  className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 dark:bg-gray-700"
-                />
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>1K</span>
-                  <span>64K</span>
-                  <span>131K</span>
-                </div>
-              </div>
-              
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Temperature controls the randomness of the model's output. Higher values (like 1.5) make output more creative and varied, while lower values (like 0.2) make it more focused and deterministic. Range: 0-2.
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Maximum Length controls how many tokens (roughly words) the model will generate in its response. Higher values allow for longer responses, up to 131,072 tokens.
-              </p>
+              )}
             </div>
             
             <StatusMessage status={saveStatus} />
@@ -257,13 +258,19 @@ const SettingsPanel = ({
         </div>
         
         <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 sticky bottom-0 bg-white dark:bg-gray-800">
-          <button
-            onClick={handleSave}
-            className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors text-sm font-medium"
-          >
-            <Save size={16} />
-            Save Settings
-          </button>
+          <div className="flex justify-end gap-3">
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave}
+            >
+              Save Settings
+            </Button>
+          </div>
         </div>
       </div>
     </div>
